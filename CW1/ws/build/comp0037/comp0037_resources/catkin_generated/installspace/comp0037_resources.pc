@@ -1,8 +1,0 @@
-prefix=/home/ros_user/Desktop/ws/install
-
-Name: comp0037_resources
-Description: Description of comp0037_resources
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/ros_user/Desktop/ws/install/lib 
-Requires: 
