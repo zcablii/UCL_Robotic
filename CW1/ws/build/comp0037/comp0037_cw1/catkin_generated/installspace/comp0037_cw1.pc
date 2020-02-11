@@ -1,0 +1,8 @@
+prefix=/home/ros_user/Desktop/ws/install
+
+Name: comp0037_cw1
+Description: Description of comp0037_cw1
+Version: 1.0.0
+Cflags: 
+Libs: -L/home/ros_user/Desktop/ws/install/lib 
+Requires: 
