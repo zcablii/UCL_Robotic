@@ -7,6 +7,7 @@ from comp0037_planner_controller.planned_path import PlannedPath
 from comp0037_planner_controller.controller_base import ControllerBase
 import math
 import angles
+import datetime
 
 # This sample controller works a fairly simple way. It figures out
 # where the goal is. It first turns the robot until it's roughly in
@@ -21,9 +22,18 @@ class Move2GoalController(ControllerBase):
         # Get the proportional gain settings
         self.distanceErrorGain = rospy.get_param('distance_error_gain', 1)
         self.angleErrorGain = rospy.get_param('angle_error_gain', 4)
-
         self.driveAngleErrorTolerance = math.radians(rospy.get_param('angle_error_tolerance', 1))
-    
+        #for total distance
+        self.prevX = self.pose.x
+        self.prevY = self.pose.y
+        self.disTraveled = 0
+        #for total angle
+        self.prevAngle = self.pose.theta
+        self.totAngle = 0
+        #for total time
+        self.currentTime = datetime.datetime.now()
+        self.totTime = 0.0
+
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
         return distance
@@ -38,6 +48,21 @@ class Move2GoalController(ControllerBase):
         
     def driveToWaypoint(self, waypoint):
         vel_msg = Twist()
+        #for total distance
+        dX = self.prevX - self.pose.x
+        dY = self.prevY - self.pose.y
+        self.prevX = self.pose.x
+        self.prevY = self.pose.y
+        self.disTraveled = self.disTraveled + sqrt(dX * dX + dY * dY)
+        #for total angle
+        self.totAngle = self.totAngle + abs(self.shortestAngularDistance(self.prevAngle, self.pose.theta))
+        self.prevAngle = self.pose.theta
+        totAngleTurned = self.totAngle/math.pi*360.0
+        #for total time
+        tempTime = datetime.datetime.now()
+        dT = tempTime - self.currentTime
+        self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
+        self.currentTime = tempTime
 
         dX = waypoint[0] - self.pose.x
         dY = waypoint[1] - self.pose.y
@@ -48,7 +73,7 @@ class Move2GoalController(ControllerBase):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
             #                                                                           waypoint[1]))
-            print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
+            print("Distance Error: {}\nAngular Error: {}\nDistance Travelled: {}\nAngle turned: {}\nTime past: {}".format(distanceError, angleError, self.disTraveled, totAngleTurned, self.totTime))
 
             # Proportional Controller
             # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
@@ -74,6 +99,21 @@ class Move2GoalController(ControllerBase):
             distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
             angleError = self.shortestAngularDistance(self.pose.theta,
                                                       atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
+            #for total distance
+            dX = self.prevX - self.pose.x
+            dY = self.prevY - self.pose.y
+            self.prevX = self.pose.x
+            self.prevY = self.pose.y
+            self.disTraveled = self.disTraveled + sqrt(dX * dX + dY * dY)
+            #for total angle
+            self.totAngle = self.totAngle + abs(self.shortestAngularDistance(self.prevAngle, self.pose.theta))
+            totAngleTurned = self.totAngle/math.pi*360.0
+            self.prevAngle = self.pose.theta
+            #for total time
+            tempTime = datetime.datetime.now()
+            dT = tempTime - self.currentTime
+            self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
+            self.currentTime = tempTime
 
         # Make sure the robot is stopped once we reach the destination.
         vel_msg.linear.x = 0
@@ -106,4 +146,3 @@ class Move2GoalController(ControllerBase):
         # Stop movement once finished
         vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
-        
