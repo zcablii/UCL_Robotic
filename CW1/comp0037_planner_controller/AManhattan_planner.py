@@ -43,4 +43,4 @@ class AMANHATTANPlanner(CellBasedForwardSearch):
     def manhattanCost(self, goal, cell):
         xCost = abs(goal.coords[0]-cell.coords[0])
         yCost = abs(goal.coords[1]-cell.coords[1])
-        return x+y 
+        return xCost + yCost
