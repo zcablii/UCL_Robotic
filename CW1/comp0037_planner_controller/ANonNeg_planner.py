@@ -2,6 +2,7 @@
 
 from cell_based_forward_search import CellBasedForwardSearch
 from collections import deque
+from cell import CellLabel
 
 # This class implements the FIFO - or breadth first search - planning
 # algorithm. It works by using a double ended queue: cells are pushed
@@ -10,44 +11,35 @@ from collections import deque
 
 class ASTARNONNEGPlanner(CellBasedForwardSearch):
 
-    # Construct the new planner object
+    # self implements an A* search algorithm
+    
     def __init__(self, title, occupancyGrid):
         CellBasedForwardSearch.__init__(self, title, occupancyGrid)
-        self.AStarQueue = []
-        self.costList = []
-        self.constant = 1
-    def getLength(self):
-	return len(self.AStarQueue)
-    # Simply put on the end of the queue
+        self.aQueue = dict()
+
+    # Put the cell's estimated cost into the dictionary
     def pushCellOntoQueue(self, cell):
-        self.AStarQueue.append(cell)
-        if(cell.parent):
-            cell.pathCost = cell.parent.pathCost + self.computeLStageAdditiveCost(cell.parent, cell) + self.constant
-        cost = cell.pathCost
-        self.costList.append(cost)
+        if cell.parent:
+            cell.pathCost = cell.parent.pathCost+self.computeLStageAdditiveCost(cell.parent, cell)
+        self.aQueue[cell] = cell.pathCost + 5
 
-        ziped_list = zip(self.costList,self.AStarQueue)
-        ziped_list.sort()
-        self.AStarQueue = [x for _,x in ziped_list]
-        self.costList = [x for x,_ in ziped_list]
-
+	
     # Check the queue size is zero
     def isQueueEmpty(self):
-        return not self.AStarQueue
+        return not self.aQueue
 
-    # Simply pull from the front of the list
+    # Pop the cell with the smallest path cost
     def popCellFromQueue(self):
-        cell = self.AStarQueue.pop(0)
-        cost = self.costList.pop(0)
+        cell = min(self.aQueue,key=self.aQueue.get)
+        del self.aQueue[cell]
         return cell
-
-    def resolveDuplicate(self, cell, parentCell):
-        predicted_cost = parentCell.pathCost + self.computeLStageAdditiveCost(parentCell, cell) + self.constant
-        if(cell.pathCost> predicted_cost):
-            cell.parent = parentCell
-            cell.pathCost = predicted_cost
-
-            ziped_list = zip(self.costList,self.AStarQueue)
-            ziped_list.sort()
-            self.AStarQueue = [x for _,x in ziped_list]
-            self.costList = [x for x,_ in ziped_list]
+    
+    # resolve Duplicate
+    def resolveDuplicate(self, cell, parent):
+        if cell.label != CellLabel.DEAD:
+	        distance = parent.pathCost+self.computeLStageAdditiveCost(cell.parent, cell)
+	        if distance < cell.pathCost:
+		        cell.pathCost = distance
+		        cell.parent = parent
+		        self.aQueue[cell] = cell.pathCost + 5
+        pass

@@ -2,51 +2,36 @@
 
 from cell_based_forward_search import CellBasedForwardSearch
 from collections import deque
-
-# This class implements the FIFO - or breadth first search - planning
-# algorithm. It works by using a double ended queue: cells are pushed
-# onto the back of the queue, and are popped from the front of the
-# queue.
+from cell import CellLabel
 
 class AEUCLIDEANPlanner(CellBasedForwardSearch):
 
-    # Construct the new planner object
     def __init__(self, title, occupancyGrid):
         CellBasedForwardSearch.__init__(self, title, occupancyGrid)
-        self.AStarQueue = []
-        self.costList = []
-    def getLength(self):
-	return len(self.AStarQueue)
-    # Simply put on the end of the queue
-    def pushCellOntoQueue(self, cell):
-        self.AStarQueue.append(cell)
-        if(cell.parent):
-            cell.pathCost = cell.parent.pathCost + self.computeLStageAdditiveCost(cell.parent, cell) + self.computeLStageAdditiveCost(self.goal, cell)
-        cost = cell.pathCost
-        self.costList.append(cost)
+        self.aQueue = dict()
 
-        ziped_list = zip(self.costList,self.AStarQueue)
-        ziped_list.sort()
-        self.AStarQueue = [x for _,x in ziped_list]
-        self.costList = [x for x,_ in ziped_list]
+    # Put the cell's path cost and estimated cost to goal into the dictionary
+    def pushCellOntoQueue(self, cell):
+        if cell.parent:
+            cell.pathCost = cell.parent.pathCost+self.computeLStageAdditiveCost(cell.parent, cell)
+        self.aQueue[cell] = cell.pathCost + self.computeLStageAdditiveCost(self.goal, cell)
 
     # Check the queue size is zero
     def isQueueEmpty(self):
-        return not self.AStarQueue
+        return not self.aQueue
 
-    # Simply pull from the front of the list
+    # Find the cell with the smallest path cost, return it and delete it from the dictionary.
     def popCellFromQueue(self):
-        cell = self.AStarQueue.pop(0)
-        cost = self.costList.pop(0)
+        cell = min(self.aQueue,key=self.aQueue.get)
+        del self.aQueue[cell]
         return cell
-
-    def resolveDuplicate(self, cell, parentCell):
-        predicted_cost = parentCell.pathCost + self.computeLStageAdditiveCost(parentCell, cell) + self.computeLStageAdditiveCost(self.goal, cell)
-        if(cell.pathCost> predicted_cost):
-            cell.parent = parentCell
-            cell.pathCost = predicted_cost
-
-            ziped_list = zip(self.costList,self.AStarQueue)
-            ziped_list.sort()
-            self.AStarQueue = [x for _,x in ziped_list]
-            self.costList = [x for x,_ in ziped_list]
+    
+    # Resolve Duplicate 
+    def resolveDuplicate(self, cell, parent):
+        if cell.label != CellLabel.DEAD:
+	        distance = parent.pathCost+self.computeLStageAdditiveCost(cell.parent, cell)
+	        if distance < cell.pathCost:
+		        cell.pathCost = distance
+		        cell.parent = parent
+		        self.aQueue[cell] = cell.pathCost + self.computeLStageAdditiveCost(self.goal, cell)
+        pass
