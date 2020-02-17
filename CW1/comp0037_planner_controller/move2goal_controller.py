@@ -24,15 +24,16 @@ class Move2GoalController(ControllerBase):
         self.angleErrorGain = rospy.get_param('angle_error_gain', 4)
         self.driveAngleErrorTolerance = math.radians(rospy.get_param('angle_error_tolerance', 1))
         #for total distance
-        self.prevX = self.pose.x
-        self.prevY = self.pose.y
+        self.prevX = 0
+        self.prevY = 0
         self.disTraveled = 0
         #for total angle
-        self.prevAngle = self.pose.theta
+        self.prevAngle = 0.0 #assume the angle the robot faces is to the right (0 degree)
         self.totAngle = 0
         #for total time
         self.currentTime = datetime.datetime.now()
         self.totTime = 0.0
+        self.count = 1
 
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
@@ -48,12 +49,19 @@ class Move2GoalController(ControllerBase):
         
     def driveToWaypoint(self, waypoint):
         vel_msg = Twist()
+        if self.count == 1:
+            self.prevX = self.pose.x
+            self.prevY = self.pose.y
+            self.prevAngle = self.pose.theta
+            self.count = 2
         #for total distance
+        print("self.prevX {} self.prevY {}\nself.prevAngle: {}\n".format(self.prevX, self.prevY, self.prevAngle))
+
         dX = self.prevX - self.pose.x
         dY = self.prevY - self.pose.y
+        self.disTraveled = self.disTraveled + sqrt(dX * dX + dY * dY)
         self.prevX = self.pose.x
         self.prevY = self.pose.y
-        self.disTraveled = self.disTraveled + sqrt(dX * dX + dY * dY)
         #for total angle
         self.totAngle = self.totAngle + abs(self.shortestAngularDistance(self.prevAngle, self.pose.theta))
         self.prevAngle = self.pose.theta
@@ -72,7 +80,7 @@ class Move2GoalController(ControllerBase):
         while (distanceError >= self.distanceErrorTolerance) & (not rospy.is_shutdown()):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
-            #                                                                           waypoint[1]))
+            #                                                                          waypoint[1]))
             print("Distance Error: {}\nAngular Error: {}\nDistance Travelled: {}\nAngle turned: {}\nTime past: {}".format(distanceError, angleError, self.disTraveled, totAngleTurned, self.totTime))
 
             # Proportional Controller
