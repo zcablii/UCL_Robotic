@@ -1,8 +1,0 @@
-prefix=/home/ros_user/Desktop/ws/devel
-
-Name: comp0037_planner_controller
-Description: Description of comp0037_planner_controller
-Version: 1.0.0
-Cflags: -I/home/ros_user/Desktop/ws/devel/include
-Libs: -L/home/ros_user/Desktop/ws/devel/lib 
-Requires: 
