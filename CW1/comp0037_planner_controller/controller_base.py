@@ -69,18 +69,33 @@ class ControllerBase(object):
     # Drive to each waypoint in turn. Unfortunately we have to add
     # the planner drawer because we have to keep updating it to
     # make sure the graphics are redrawn properly.
+    def calculateDirection(self, current, next):
+	
+        dX = next.coords[0] - current.coords[0]
+        dY = next.coords[1] - current.coords[1]
+        return abs(atan2(dY, dX))
+
     def drivePathToGoal(self, path, goalOrientation, plannerDrawer):
         self.plannerDrawer = plannerDrawer
 
         rospy.loginfo('Driving path to goal with ' + str(len(path.waypoints)) + ' waypoint(s)')
         
         # Drive to each waypoint in turn
+	#current_direction = self.pose.theta
+	prev = None
         for waypointNumber in range(0, len(path.waypoints)):
-            cell = path.waypoints[waypointNumber]
+            
+	    cell = path.waypoints[waypointNumber]
+	    if(waypointNumber<len(path.waypoints)-1):
+	    	next = path.waypoints[waypointNumber+1]
+	    	if(prev is not None):
+			if(self.calculateDirection(prev, cell)==self.calculateDirection(cell, next)):
+				continue	
             waypoint = self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(cell.coords)
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
             self.driveToWaypoint(waypoint)
             # Handle ^C
+	    prev = cell
             if rospy.is_shutdown() is True:
                 break
 
