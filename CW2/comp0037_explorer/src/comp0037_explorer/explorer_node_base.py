@@ -43,6 +43,7 @@ class ExplorerNodeBase(object):
         self.visualisationUpdateRequired = False
 
         self.current_time = time.time()
+        self.start_time = 0
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -165,7 +166,7 @@ class ExplorerNodeBase(object):
         velocityPublisher.publish(velocityMessage)
         rospy.sleep(1)
 
-    def compute_entropy(self):
+    def compute_entropy(self, time):
         entropy=0
         unknownCells = 0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
@@ -181,7 +182,7 @@ class ExplorerNodeBase(object):
         with open (dir, 'a') as f:
             #wr = csv.writer(myfile, quoting = csv.QUOTE_ALL)
             wr = csv.writer(f)
-            wr.writerow(str(pCMap))
+            wr.writerow([float(time), float(pCMap)])
         return 
 
             
@@ -228,12 +229,14 @@ class ExplorerNodeBase(object):
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
 
         keepRunning = True
-        
+        self.start_time = time.time()
+
         while (rospy.is_shutdown() is False) & (keepRunning is True):
 
             rospy.sleep(0.1)
             if time.time() - self.current_time >= 5:
-                self.compute_entropy()
+                dtime = time.time() - self.start_time
+                self.compute_entropy(dtime)
                 self.current_time = time.time()
             
             self.updateVisualisation()
