@@ -8,7 +8,7 @@ from comp0037_reactive_planner_controller.srv import *
 from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
-
+import csv
 import time
 class ExplorerNodeBase(object):
 
@@ -177,6 +177,11 @@ class ExplorerNodeBase(object):
         print ("======")
         print("entropy: "+ str(pCMap))
         print ("======")
+        dir = '/home/ros_user/Desktop/cw2/data/entropy_log.csv'
+        with open (dir, 'a') as f:
+            #wr = csv.writer(myfile, quoting = csv.QUOTE_ALL)
+            wr = csv.writer(f)
+            wr.writerow(str(pCMap))
         return 
 
             
