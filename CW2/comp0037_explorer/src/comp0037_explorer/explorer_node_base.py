@@ -9,8 +9,6 @@ from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
 
-import csv
-import time
 class ExplorerNodeBase(object):
 
     def __init__(self):
@@ -36,9 +34,6 @@ class ExplorerNodeBase(object):
         # Clear the map variables
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
-
-        self.current_time = time.time()
-        self.start_time = 0
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -108,27 +103,7 @@ class ExplorerNodeBase(object):
     # False, it is assumed that the map is completely explored and the
     # explorer will exit.
     def updateFrontiers(self):
-        self.frontierList = []
-        covered = 0
-        for x in range(0, self.occupancyGrid.getWidthInCells()):
-            for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if(not self.checkIfCellIsUnknown(x,y,0,0)):
-                    covered +=1
-                if self.isFrontierCell(x, y):
-                    frontier = (x,y)
-                    self.frontierList.append(frontier)
-        total = self.occupancyGrid.getHeightInCells()*self.occupancyGrid.getWidthInCells()
-        rate = float(covered)/float(total)
-
-        print "coverage: " + str(rate)
-        tempTime = datetime.datetime.now()
-        dT = tempTime - self.currentTime
-        self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
-        self.currentTime = tempTime
-
-        
-        print "time: " + str(self.totTime)
-
+        raise NotImplementedError()
 
     def chooseNewDestination(self):
         raise NotImplementedError()
@@ -190,37 +165,14 @@ class ExplorerNodeBase(object):
         velocityMessage = Twist()
         velocityPublisher.publish(velocityMessage)
         rospy.sleep(1)
-
-    
-    def compute_entropy(self, time):
-        entropy=0
-        unknownCells = 0
-        for x in range(0, self.occupancyGrid.getWidthInCells()):
-            for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if self.checkIfCellIsUnknown(x, y, 0, 0) == True:
-                    unknownCells += 1
-        
-        pCMap = math.log(2)* abs(unknownCells)
-        print ("======")
-        print("entropy: "+ str(pCMap))
-        print ("======")
-        dir = '/home/ros_user/Desktop/cw2/data/entropy_log.csv'
-        with open (dir, 'a') as f:
-            #wr = csv.writer(myfile, quoting = csv.QUOTE_ALL)
-            wr = csv.writer(f)
-            wr.writerow([float(time), float(pCMap)])
-        return 
-
             
-
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
             self.explorer = explorer
             self.running = False
             self.completed = False
-	        
-            
+        
             self.count = 1
 
         def isRunning(self):
@@ -253,21 +205,17 @@ class ExplorerNodeBase(object):
                 else:
                     self.completed = True
                 self.explorer.updateFrontiers()
+		
        
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
 
         keepRunning = True
-        self.start_time = time.time()
-
+        
         while (rospy.is_shutdown() is False) & (keepRunning is True):
 
             rospy.sleep(0.1)
-            if time.time() - self.current_time >= 5:
-                dtime = time.time() - self.start_time
-                self.compute_entropy(dtime)
-                self.current_time = time.time()
             
             self.updateVisualisation()
 

@@ -15,9 +15,33 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
    
 
     def calculateDistance(self,p1, p2):
-        width = p2[0] - p1[0]
-        height = p2[1] - p2[1]
-        return sqrt(width**2+height**2)
+        width = p1[0] - p2[0]
+        height = p1[1] - p2[1]
+        return width**2+height**2
+
+    def updateFrontiers(self):
+        self.frontierList = []
+        covered = 0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if(not self.checkIfCellIsUnknown(x,y,0,0)):
+                    covered +=1
+                if self.isFrontierCell(x, y):
+                    frontier = (x,y)
+                    self.frontierList.append(frontier)
+        total = self.occupancyGrid.getHeightInCells()*self.occupancyGrid.getWidthInCells()
+        rate = float(covered)/float(total)
+
+        print "coverage: " + str(rate)
+        tempTime = datetime.datetime.now()
+        dT = tempTime - self.currentTime
+        self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
+        self.currentTime = tempTime
+        print "time: " + str(self.totTime)
+        if(len(self.frontierList)==0):
+            return False
+        else:
+            return True
 
     def isAdjacent(self,point1, point2):
         if((point1[0]+1==point2[0] and point1[1]==point2[1])|(point1[0]-1==point2[0] and point1[1]==point2[1])|(point1[0]==point2[0] and point1[1]+1==point2[1])|
@@ -27,57 +51,7 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
         else:
             return False
             
-    def AllNeighbour(self, point, frontierList):
-        result = []
-        result.append(point)
-        for i in range(-, len(frontierList)-1):
-            if(self.isAdjacent(point,frontierList[i])):
-                result.extend(self.AllNeighbour(frontierList[i], frontierList))
-        return result
-
-    def largestFrontier(self, frontierList):
-        largest = []
-        while(len(frontierList) is not 0):
-            point = frontierList.pop(0)
-            self.AllNeighbour(point, frontierList)
-            
-
-    def isAdjacent(self,point1, point2):
-        if((point1[0]+1==point2[0] and point1[1]==point2[1])|(point1[0]-1==point2[0] and point1[1]==point2[1])|(point1[0]==point2[0] and point1[1]+1==point2[1])|
-        (point1[0]==point2[0] and point1[1]-1==point2[1])|(point1[0]+1==point2[0] and point1[1]+1==point2[1])|(point1[0]+1==point2[0] and point1[1]-1==point2[1])|
-        (point1[0]-1==point2[0] and point1[1]+1==point2[1])|(point1[0]-1==point2[0] and point1[1]-1==point2[1])):
-            return True
-        else:
-            return False
-            
-
-
-    def pushToList(self,point, List):
-   
-        for group in List:
-            for gpoint in group:
-                if(self.isAdjacent(point,gpoint)):
-                    group.append(point)
-                    return List
-        return List.append([point])      
-    def largestFrontier(self, frontierList):
-        sortList = []
-        while(len(list) is not 0):
-            point = list.pop(0)
-            print(point)
     
-            if(len(sortList)==0):
-                sortList.append([point])
-                print(sortList)     
-                continue
-            pushToList(point, sortList)
-        max = 0
-        maxGroup = []
-        for group in sortList:
-            if len(group)>max:
-                max = len(group)
-                maxGroup = group
-        return maxGroup
     def chooseNewDestination(self):
 
 
@@ -88,7 +62,7 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
         candidateGood = False
         destination = None
         smallestD2 = float('inf')
-
+        self.updateFrontiers()
         for point in self.frontierList:
                 candidate = (point[0], point[1])
                 
