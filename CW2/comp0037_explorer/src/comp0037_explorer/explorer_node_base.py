@@ -1,7 +1,7 @@
 import rospy
 import threading
 import math
-
+import datetime
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
 from comp0037_reactive_planner_controller.srv import *
@@ -10,6 +10,7 @@ from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
 import csv
 import time
+
 class ExplorerNodeBase(object):
 
     def __init__(self):
@@ -20,11 +21,16 @@ class ExplorerNodeBase(object):
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
-
+        self.frontierList = []
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
-
+	
+        self.currentTime = datetime.datetime.now()
+        self.totTime = 0.0
+        self.count = 1
+        self.current_time = time.time()
+        self.start_time = 0
         # Subscribe to get the map update messages
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.noMapReceived = True
@@ -41,9 +47,6 @@ class ExplorerNodeBase(object):
         self.occupancyGridDrawer = None
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
-
-        self.current_time = time.time()
-        self.start_time = 0
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -66,6 +69,7 @@ class ExplorerNodeBase(object):
             self.deltaOccupancyGrid = OccupancyGrid.fromMapUpdateMessage(msg)
 
         # Update the grids
+	
         self.occupancyGrid.updateGridFromVector(msg.occupancyGrid)
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
@@ -165,9 +169,10 @@ class ExplorerNodeBase(object):
         velocityMessage = Twist()
         velocityPublisher.publish(velocityMessage)
         rospy.sleep(1)
-
+            
     def compute_entropy(self, time):
         entropy=0
+        total = self.occupancyGrid.getHeightInCells()*self.occupancyGrid.getWidthInCells()
         unknownCells = 0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
@@ -175,8 +180,10 @@ class ExplorerNodeBase(object):
                     unknownCells += 1
         
         pCMap = math.log(2)* abs(unknownCells)
+        cv = float(total - unknownCells) / float(total) *100
         print ("======")
         print("entropy: "+ str(pCMap))
+        print("coverage: "+ str(cv)+"%")
         print ("======")
         dir = '/home/ros_user/Desktop/cw2/data/entropy_log.csv'
         with open (dir, 'a') as f:
@@ -185,19 +192,20 @@ class ExplorerNodeBase(object):
             wr.writerow([float(time), float(pCMap)])
         return 
 
-            
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
             self.explorer = explorer
             self.running = False
-            self.completed = False;
-
+            self.completed = False
+        
+            self.count = 1
 
         def isRunning(self):
             return self.running
 
         def hasCompleted(self):
+            
             return self.completed
 
         def run(self):
@@ -222,7 +230,8 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    
+                self.explorer.updateFrontiers()
+		
        
     def run(self):
 
@@ -250,6 +259,6 @@ class ExplorerNodeBase(object):
             if explorerThread.hasCompleted() is True:
                 explorerThread.join()
                 keepRunning = False
-
+		
             
             
