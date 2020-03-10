@@ -65,8 +65,7 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
         self.updateFrontiers()
         for point in self.frontierList:
                 candidate = (point[0], point[1])
-                
-                    
+        
                 candidateGood = True
                 for k in range(0, len(self.blackList)):
                     if self.blackList[k] == candidate:
