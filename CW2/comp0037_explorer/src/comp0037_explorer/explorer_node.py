@@ -28,9 +28,6 @@ class ExplorerNode(ExplorerNodeBase):
             return False
             
 
-
-    
-
     def chooseNewDestination(self):
 
 
