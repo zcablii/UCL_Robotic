@@ -51,6 +51,34 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
         else:
             return False
             
+
+
+    def pushToList(self,point, List):
+        for group in List:
+            for gpoint in group:
+                if(self.isAdjacent(point,gpoint)):
+                    group.append(point)
+                    return List
+        return List.append([point])      
+
+    def largestFrontier(self, frontierList):
+        sortList = []
+        while(len(frontierList) is not 0):
+            point = frontierList.pop(0)
+            print(point)
+    
+            if(len(sortList)==0):
+                sortList.append([point])
+                print(sortList)     
+                continue
+            self.pushToList(point, sortList)
+        max = 0
+        maxGroup = []
+        for group in sortList:
+            if len(group)>max:
+                max = len(group)
+                maxGroup = group
+        return maxGroup
     
     def chooseNewDestination(self):
 
@@ -63,7 +91,7 @@ class ExplorerNodeLargestFrontier(ExplorerNodeBase):
         destination = None
         smallestD2 = float('inf')
         self.updateFrontiers()
-        for point in self.frontierList:
+        for point in self.largestFrontier(self.frontierList):
                 candidate = (point[0], point[1])
         
                 candidateGood = True

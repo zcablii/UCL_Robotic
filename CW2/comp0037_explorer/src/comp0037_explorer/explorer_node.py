@@ -30,40 +30,6 @@ class ExplorerNode(ExplorerNodeBase):
             
 
 
-    def updateFrontiers(self):
-        self.frontierList = []
-        covered = 0
-        for x in range(0, self.occupancyGrid.getWidthInCells()):
-            for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if(not self.checkIfCellIsUnknown(x,y,0,0)):
-                    covered +=1
-                if self.isFrontierCell(x, y):
-                    frontier = (x,y)
-                    self.frontierList.append(frontier)
-        total = self.occupancyGrid.getHeightInCells()*self.occupancyGrid.getWidthInCells()
-        rate = float(covered)/float(total)
-
-        print "coverage: " + str(rate)
-        tempTime = datetime.datetime.now()
-        dT = tempTime - self.currentTime
-        self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
-        self.currentTime = tempTime
-        print "time: " + str(self.totTime)
-        if(len(self.frontierList)==0):
-            return False
-        else:
-            return True
-
-    def isAdjacent(self,point1, point2):
-        if((point1[0]+1==point2[0] and point1[1]==point2[1])|(point1[0]-1==point2[0] and point1[1]==point2[1])|(point1[0]==point2[0] and point1[1]+1==point2[1])|
-        (point1[0]==point2[0] and point1[1]-1==point2[1])|(point1[0]+1==point2[0] and point1[1]+1==point2[1])|(point1[0]+1==point2[0] and point1[1]-1==point2[1])|
-        (point1[0]-1==point2[0] and point1[1]+1==point2[1])|(point1[0]-1==point2[0] and point1[1]-1==point2[1])):
-            return True
-        else:
-            return False
-            
-
-
     def pushToList(self,point, List):
         for group in List:
             for gpoint in group:
@@ -90,6 +56,37 @@ class ExplorerNode(ExplorerNodeBase):
                 max = len(group)
                 maxGroup = group
         return maxGroup
+    
+
+    def updateFrontiers(self):
+        self.frontierList = []
+        covered = 0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if(not self.checkIfCellIsUnknown(x,y,0,0)):
+                    covered +=1
+                if self.isFrontierCell(x, y):
+                    frontier = (x,y)
+                    self.frontierList.append(frontier)
+        total = self.occupancyGrid.getHeightInCells()*self.occupancyGrid.getWidthInCells()
+        rate = float(covered)/float(total)
+
+        print "coverage: " + str(rate)
+        tempTime = datetime.datetime.now()
+        dT = tempTime - self.currentTime
+        self.totTime = self.totTime + dT.seconds + dT.microseconds*(10**(-6))
+        self.currentTime = tempTime
+        print "time: " + str(self.totTime)
+        if(len(self.frontierList)==0):
+            return False
+        else:
+            return True
+
+            
+
+
+   
+
     def chooseNewDestination(self):
 
 
@@ -101,7 +98,7 @@ class ExplorerNode(ExplorerNodeBase):
         destination = None
         smallestD2 = float('inf')
         self.updateFrontiers()
-        for point in self.frontierList:
+        for point in self.largestFrontier(self.frontierList):
                 candidate = (point[0], point[1])
                 
                     
