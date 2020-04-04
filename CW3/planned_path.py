@@ -27,8 +27,14 @@ class PlannedPath(object):
        # Check the tail of one list is the head of another
 
         otherPlannedPathList = list(otherPlannedPath.waypoints)
-        
-        assert(list(self.waypoints)[-1].coords == otherPlannedPathList[0].coords)
+        #print("======first hehe=====")
+        #print(list(self.waypoints)[-1].coords[0], list(self.waypoints)[-1].coords[1])
+
+        #print("======second hehe=====")
+        #print(otherPlannedPathList[0].coords[0], otherPlannedPathList[0].coords[1])
+
+
+        #assert(list(self.waypoints)[-1] == otherPlannedPathList[0])
 
         # Now go through and add the elements from the other planned path to this one.
         for i in range(len(otherPlannedPathList) - 1):
