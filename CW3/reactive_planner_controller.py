@@ -56,7 +56,7 @@ class ReactivePlannerController(PlannerControllerBase):
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-
+        L_w = 2
         pathViaB = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
         print("============================")
         print("path cost of " + str(Aisle.B) + " is " + str(pathViaB.travelCost))        
@@ -65,18 +65,25 @@ class ReactivePlannerController(PlannerControllerBase):
         pathViaC = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
         print("path cost of " + str(Aisle.C) + " is " + str(pathViaC.travelCost))        
         print("============================")
-
-        costDiff = pathViaC.travelCost > pathViaB.travelCost
+        threshold = (pathViaC - pathViaB)/(L_w * self.P_B)
+        print("threshold =" + str(threshold))
+        print("============================")
+        
+        
+        T = 1.0/self.lamda_B
+        pathViaB = pathViaB + T * L_w * self.P_B
         lowestCost = 0
         if (pathViaC.travelCost > pathViaB.travelCost):
-            lowestCost = pathViaB.travelCost
+            #lowestCost = pathViaB.travelCost
+            return B
+            
         else:
-            lowestCost = pathViaC.travelCost
+            #lowestCost = pathViaC.travelCost
+            return Aisle.C
 
         #lamda_B  is  self.lamda_B = 0.05
         #probability of obstacle is  self.P_B = 0.8
 
-        return Aisle.B
         
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
