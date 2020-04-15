@@ -71,11 +71,11 @@ class ReactivePlannerController(PlannerControllerBase):
         
         
         T = 1.0/self.lamda_B
-        pathViaB = pathViaB + T * L_w * self.P_B
+        costViaB = pathViaB.travelCost + T * L_w * self.P_B
         lowestCost = 0
-        if (pathViaC.travelCost > pathViaB.travelCost):
+        if (pathViaC.travelCost > costViaB):
             #lowestCost = pathViaB.travelCost
-            return B
+            return Aisle.B
             
         else:
             #lowestCost = pathViaC.travelCost
